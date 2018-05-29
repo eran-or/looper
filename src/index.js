@@ -8,7 +8,6 @@ import registerServiceWorker from './registerServiceWorker'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import './index.css'
 import {setTracks} from './redux/actions/tracks'
-
 const store = configureStore()
 
 const app = (
