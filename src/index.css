@@ -1,0 +1,89 @@
+html,body {
+  height:100%;height:100%;
+  font-size: 14px;
+}
+.text-black-30{
+  color: rgba(0,0,0,0.3);
+}
+.text-black-20{
+  color: rgba(0,0,0,0.2);
+}
+.fz-13{
+font-size: 13px;
+}
+.fz-12{
+  font-size: 12px;
+  }
+.fz-11{
+  font-size: 11px;
+}
+
+.mt-m5{
+  margin-top: -5px;
+}
+.lh-7{
+  line-height: 7px;
+}
+
+.list-item-right{
+  height:35px;
+}
+.btn-active{
+  border-radius: 20px;
+  border:1px solid #343434;
+  cursor: pointer;
+}
+
+.btn-play{
+  width:40px; 
+  height:40px;
+  cursor: pointer;
+}
+
+.btn-play div.play{
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 8px 0 8px 12px;
+  border-color: transparent transparent transparent #d84c45;
+  margin-top: 1px;
+  margin-right: -5px;
+}
+
+.btn-play div.pause{
+  width: 8px;
+  height: 12px;
+  border-color: #d84c45;
+  border-style: solid;
+  border-width: 0 3px 0 3px;
+}
+
+.delete-btn{width:24px; height:16px; cursor: pointer; background: url('assets/trash.svg') no-repeat right top;background-size:16px;}
+.volume-btn{width:24px; height:16px; cursor: pointer; background: url('assets/volume.svg') no-repeat;background-size:16px;}
+.mute-btn{width:24px; height:24px; cursor: pointer; background-image: url('assets/mute.svg') no-repeat;background-size:16px;}
+
+input[type=range] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  background: transparent;
+}
+input[type=range]:focus {
+  outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  background: black;
+  cursor: pointer;
+  border-radius:50%;
+  width:10px;
+  height:10px;
+  margin-top: -4.5px;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 2px;
+  cursor: pointer;
+}
