@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Route, Switch } from 'react-router-dom'
 import Home from '../components/Home'
 
 const AppRouter = (props) => (
-    <Router basename="/looper/">
+    <Router>
     <div>
       <Switch>
         <Route path="/" component={Home} exact={true} />
