@@ -1,18 +1,13 @@
 import React, { Component } from 'react'
 import Slider from './Slider'
-import { bindActionCreators } from 'redux'
-import { connect } from 'react-redux'
-import { setAudioRef, togglePlayingAll, eventStatus } from '../redux/actions/tracks'
 
 class PlaylistItem extends Component {
-
   constructor(props) {
-    super(props);
+    super(props)
     this.audio = React.createRef();
-    this.playBtn = React.createRef();
-    this.state = {
-      isPlaying: false,
-      isMuted: false
+    this.state={
+      isPaused:true,
+      isMuted:false
     }
   }
 
@@ -21,53 +16,51 @@ class PlaylistItem extends Component {
   }
 
   playAndPauseAudio = (e) => {
-    const { isPlaying } = this.state
-    this.props.eventStatus(false)
-    console.log(isPlaying)
-    if (isPlaying) {
-      this.audio.current.pause()
+    console.log(this.audio)
+    if (this.audio.current.paused) {
+      this.audio.current.play()
     } else {
-        this.audio.current.play()
+      this.audio.current.pause()
     }
-    this.setState({ isPlaying: !this.state.isPlaying })
+    this.setState({isPaused:this.audio.current.paused})
   }
 
   muteAndUnmuteAudio = (e) => {
-    this.audio.current.muted = !this.state.isMuted
-    this.setState({ isMuted: !this.state.isMuted })
+     this.audio.current.muted = !this.audio.current.muted
+    this.setState({ isMuted: this.audio.current.muted })
   }
 
-  componentDidMount() {
-    const { Id } = this.props.track
-    this.audioMap = this.props.audioRefs || new Map()
-    this.audioMap.set(Id, {
-      play: this.playBtn,
-      audio: this.audio.current,
-      isPlaying: this.state.isPlaying
-    })
-    this.props.setAudioRef(this.audioMap)
+  componentDidUpdate(prevProps, prevState, snapshot){
+    
+    if(prevProps.playAll !== this.props.playAll){
+      console.log(this.audio)
+      let isPaused
+      if(this.props.playAll){
+        this.audio.current.loop = true
+        this.audio.current.play()
+        isPaused = false
+      }else{
+        this.audio.current.loop = false
+        this.audio.current.stop()
+        isPaused = true
+      }
+      this.setState({isPaused})
+    }
   }
 
   render() {
-    //console.log(this.state.isPlaying)
-    const { track, deleteTrack, isPlayingAll, status} = this.props
-    const { isMuted, isPlaying } = this.state
-    let buttonState
-    
-    if(status==='looping' || status==='stopLooping'){
-      buttonState = isPlayingAll
-    }else{
-      buttonState = isPlaying
-    }
-    
+    const { track, removeTrack, handleVolumeChange, playAll } = this.props
+    const {isPaused, isMuted} = this.state
+
     return (
       <div className="border-bottom border-dark py-2 d-flex align-items-start">
         {/* play button */}
         <audio ref={this.audio}>
           <source src={track.url} type="audio/mpeg" />
         </audio>
-        <div ref={this.playBtn} onClick={this.playAndPauseAudio} className="btn-play d-flex align-items-center justify-content-center border border-dark rounded-circle mr-3">
-          <div className={buttonState ? "pause" : "play"}></div>
+
+        <div onClick={this.playAndPauseAudio} className="btn-play d-flex align-items-center justify-content-center border border-dark rounded-circle mr-3">
+          <div className={isPaused ? "play" : "pause"}></div>
         </div>
         <div className="mt-m5 mr-5">
           <div>{track.owner}</div>
@@ -76,7 +69,7 @@ class PlaylistItem extends Component {
         </div>
         <div className="d-flex flex-column align-items-end list-item-right justify-content-between ml-auto">
           {/* delete button */}
-          <div onClick={() => deleteTrack(track.Id)} className="delete-btn"></div>
+          <div onClick={() => removeTrack(track.Id)} className="delete-btn"></div>
           <div className="d-flex lh-7">
             {/* mute button */}
             <div onClick={this.muteAndUnmuteAudio} className={`mute-btn ${isMuted ? 'unmute' : ''}`}></div>
@@ -87,16 +80,5 @@ class PlaylistItem extends Component {
     )
   }
 }
-const mapStateToProps = state => {
-  return {
-    audioRefs: state.audioRefs,
-    isPlayingAll: state.isPlayingAll,
-    status: state.status
-  }
-}
-const mapDispatchToProps = dispatch => ({
-  setAudioRef: bindActionCreators(setAudioRef, dispatch),
-  togglePlayingAll: bindActionCreators(togglePlayingAll, dispatch),
-  eventStatus: bindActionCreators(eventStatus, dispatch)
-})
-export default connect(mapStateToProps, mapDispatchToProps)(PlaylistItem)
+
+export default PlaylistItem

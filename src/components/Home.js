@@ -2,7 +2,7 @@ import React, { Component } from 'react'
 import Playlist from './Playlist'
 import ActionsBar from './ActionsBar'
 import SelectTrack from './SelectTrack'
-import { togglePlayingAll, eventStatus, setAudioRef } from '../redux/actions/tracks'
+import { setTracklist, togglePlayAll } from '../redux/actions/tracks'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 
@@ -11,38 +11,21 @@ HTMLAudioElement.prototype.stop = function()
     this.pause();
     this.currentTime = 0.0;
 }
-class Home extends React.PureComponent {
-  state = {
-    values: [],
-    tracklist:[]
-  }
+class Home extends Component {
 
-  addToTracklist = (selected)=>{
-    if(selected===null){
+  handleSelect = (selected) => {
+    const { setTracklist, tracklist, tracks } = this.props
+    if (selected === null) {
       return false
     }
-    this.props.togglePlayingAll(false)
-    const track = this.props.tracks.filter((t)=>selected.value===t.Id)[0]
-    
-    this.setState({ tracklist: [...this.state.tracklist, track],values:[...this.state.values, selected] })
-  }
-  
-  removeFromTracklist = (id)=>{
-    if(id===null){
-      return false
-    }
-    console.log("removeFromTracklist")
-    const tracklist = this.state.tracklist.filter((t)=>id!==t.Id)
-    const values = this.state.values.filter((v)=>id!==v.value)
-    if(tracklist.length===0){
-      this.props.togglePlayingAll(false) 
-    }
-    this.setState({ tracklist,values })
+    const track = tracks.filter((t) => selected.value === t.Id)[0]
+    setTracklist([...tracklist,track])
   }
 
   filterValues = () => {
-    const ids = this.state.values.map((t) => t.value)
-    return this.props.tracks.reduce((a, t) => {
+    const {tracklist, tracks} = this.props
+    const ids = tracklist.map((t) => t.Id)
+    return tracks.reduce((a, t) => {
       if (!ids.includes(t.Id)) {
         a.push({ value: t.Id, label: t.owner })
       }
@@ -50,59 +33,33 @@ class Home extends React.PureComponent {
     }, [])
   }
 
-  playAll = ()=>{
-    const { audioRefs, togglePlayingAll, isPlayingAll, eventStatus, setAudioRef} = this.props
-    if(!audioRefs){
-      return
-    }
-    
-    togglePlayingAll(!isPlayingAll)
-    if(isPlayingAll){
-      for (const ref of audioRefs.values()) {
-        ref.audio.stop()
-        ref.isPlaying = false
-        eventStatus("stopLlooping")  
-      }
-    }else{
-      for (const ref of audioRefs.values()) {
-        ref.audio.stop()
-        ref.audio.play()
-        ref.isPlaying = true
-        eventStatus("looping")
-      }
-      
-    }
-  }
-
   render() {
     const values = this.filterValues()
-    const {isPlayingAll} = this.props
+    const {togglePlayAll, playAll} = this.props
     return (
       <div>
         <hr className="shadow-sm" />
         <div className="px-3">
-          <ActionsBar playAll={this.playAll} isPlayingAll={isPlayingAll}/>
+          <ActionsBar togglePlayAll={()=>togglePlayAll(!playAll)} playAll={playAll}/>
           <h6 className="text-black-30 pt-3">
-            <SelectTrack placeholder={"Select Track"} values={values} handleSelect={this.addToTracklist} />
+            <SelectTrack handleSelect={this.handleSelect} values={values} placeholder={"Select Track"} />
           </h6>
-          <Playlist list={this.state.tracklist} deleteTrack={(id)=>this.removeFromTracklist(id)}/>
+          <Playlist />
         </div>
       </div>
     )
   }
 }
+
 const mapStateToProps = state => {
-  return  ({
+  return ({
     tracks: state.tracks,
-    audioRefs: state.audioRefs,
-    isPlayingAll:state.isPlayingAll,
-    status:state.status
+    tracklist: state.tracklist || [],
+    playAll: state.playAll
   })
 }
 const mapDispatchToProps = dispatch => ({
-  togglePlayingAll:bindActionCreators(togglePlayingAll,dispatch),
-  eventStatus:bindActionCreators(eventStatus,dispatch),
-  setAudioRef:bindActionCreators(setAudioRef,dispatch)
-
+  setTracklist: bindActionCreators(setTracklist, dispatch),
+  togglePlayAll: bindActionCreators(togglePlayAll, dispatch)
 })
 export default connect(mapStateToProps, mapDispatchToProps)(Home)

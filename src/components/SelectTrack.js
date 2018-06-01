@@ -15,7 +15,6 @@ class SelectTrack extends Component {
   }
 
   render() {
-    
      const { placeholder, values } = this.props
      const { value } = this.state
      
