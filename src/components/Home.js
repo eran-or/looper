@@ -2,34 +2,30 @@ import React, { Component } from 'react'
 import Playlist from './Playlist'
 import ActionsBar from './ActionsBar'
 import SelectTrack from './SelectTrack'
-import { setTracklist, togglePlayAll, toggleSync, setSynclist } from '../redux/actions/tracks'
+import { setTracklist, togglePlayAll, toggleSync } from '../redux/actions/tracks'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
 
-HTMLAudioElement.prototype.stop = function()
-{
-    this.pause();
-    this.currentTime = 0.0;
+HTMLAudioElement.prototype.stop = function () {
+  this.pause();
+  this.currentTime = 0.0;
 }
 class Home extends Component {
 
   handleSelect = (selected) => {
-    //Add to list and remove or add selected from and to select box
+    //Add to tracklist and remove or add selected from select box
 
-    const {sync, setTracklist, tracklist, setSynclist, synclist, tracks } = this.props
+    const { setTracklist, tracklist, tracks } = this.props
     if (selected === null) {
       return false
     }
-    const track = tracks.filter((t) => selected.value === t.Id)[0]
-    if(sync){
-      setSynclist([...synclist,track])
-    }else{
-      setTracklist([...tracklist,track])
-    }
+    let track = tracks.filter((t) => selected.value === t.Id)[0]
+    track = Object.assign({}, track)
+    setTracklist([...tracklist, track])
   }
 
   filterValues = () => {
-    const {tracklist, tracks} = this.props
+    const { tracklist, tracks } = this.props
     const ids = tracklist.map((t) => t.Id)
     return tracks.reduce((a, t) => {
       if (!ids.includes(t.Id)) {
@@ -38,75 +34,78 @@ class Home extends Component {
       return a
     }, [])
   }
-  canSync = async ()=>{
-    const {durationMap, tracklist} = this.props
-    
+
+  getDuration = (id) => {
     return new Promise(resolve => {
-      if(durationMap&&[durationMap].length===tracklist.length){
-        resolve(true)
-      }else{
-        const interval = setInterval(()=>{
-          const {durationMap, tracklist} = this.props
-          if(durationMap&&[...durationMap].length===tracklist.length){
+      let duration
+      const interval = setInterval(() => {
+        if (this.props.durationMap) {
+          duration = this.props.durationMap.get(id)
+          if (duration) {
             clearInterval(interval)
-            resolve(true)
+            resolve(duration)
           }
-        },500)
-      }
+        }
+      }, 500)
     })
   }
-  
-  handleSync = async (sync)=>{
 
-    const {tracklist} = this.props
-    console.log(tracklist)
-    if(tracklist.length===0){
+  handleSync = async (sync) => {
+    const { tracklist } = this.props
+
+    if (tracklist.length === 0) {
       return
     }
-    await this.canSync()
-    const { toggleSync, durationMap, setSynclist, togglePlayAll} = this.props
-    let copy = [...durationMap]
-    
-    if(sync){
-    copy.sort((a,b)=>{
-      return (a[1]>b[1]?1:-1)
-    })
-    const synclist = []
 
-    const leader = tracklist.filter((t)=>copy[0][0]===t.Id)[0]
-    let leaderBpm
-    leaderBpm = leader.bpm
-    
-    for(let i=0,l=copy.length;i<l;i++){
-      let track = tracklist.filter((t)=>copy[i][0]===t.Id)[0]
-      track.bpm = leaderBpm
-      synclist.push(track)
+    const { tracks, toggleSync, togglePlayAll, setTracklist } = this.props
+    if (sync) {
+      let leader = 0
+      
+      let synclist = await tracklist.reduce(async (promise, t) => {
+        let duration = await this.getDuration(t.Id)
+        if(+duration>leader){
+          leader = +duration
+        }
+        promise.then(arr=>arr.push(t))
+        return promise
+      }, Promise.resolve([]))
+      synclist.map(t => {
+        t.bpm = leader
+        return t
+      })
+      setTracklist(synclist)
+    } else {
+      const tracklistMap = new Map()
+      tracklist.map(t => tracklistMap.set(t.Id, t))
+      const list = tracks.reduce((a, n) => {
+        if (tracklistMap.get(n.Id)) {
+          let o = { ...n }
+          a.push(o)
+        }
+        return a
+      }, [])
+      setTracklist(list)
     }
-    
-    setSynclist(synclist)
-    
-    }else{
-      setSynclist([])
-    }
+    console.log()
     togglePlayAll(false)
     toggleSync(sync)
   }
 
-  handlePlayAll = (playAll)=>{
-    const {togglePlayAll, toggleSync} = this.props
+  handlePlayAll = (playAll) => {
+    const { togglePlayAll, toggleSync } = this.props
     toggleSync(false)
     togglePlayAll(playAll)
   }
 
   render() {
     const values = this.filterValues()
-    const {playAll, sync} = this.props
-    
+    const { playAll, sync } = this.props
+
     return (
       <div>
         <hr className="shadow-sm" />
         <div className="px-3">
-          <ActionsBar handlePlayAll={this.handlePlayAll} playAll={playAll} handleSync={this.handleSync} sync={sync}/>
+          <ActionsBar handlePlayAll={this.handlePlayAll} playAll={playAll} handleSync={this.handleSync} sync={sync} />
           <h6 className="text-black-30 pt-3">
             <SelectTrack handleSelect={this.handleSelect} values={values} placeholder={"Select Track"} />
           </h6>
@@ -130,7 +129,6 @@ const mapStateToProps = state => {
 const mapDispatchToProps = dispatch => ({
   setTracklist: bindActionCreators(setTracklist, dispatch),
   togglePlayAll: bindActionCreators(togglePlayAll, dispatch),
-  toggleSync: bindActionCreators(toggleSync, dispatch),
-  setSynclist: bindActionCreators(setSynclist, dispatch)
+  toggleSync: bindActionCreators(toggleSync, dispatch)
 })
 export default connect(mapStateToProps, mapDispatchToProps)(Home)
