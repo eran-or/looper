@@ -86,7 +86,6 @@ class Home extends Component {
       }, [])
       setTracklist(list)
     }
-    console.log()
     togglePlayAll(false)
     toggleSync(sync)
   }
